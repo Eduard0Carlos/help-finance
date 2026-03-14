@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Bell, Eye, EyeOff } from "lucide-react";
 import { useSession } from "@/components/layout/SessionContext";
 import { useBalance } from "./BalanceContext";
@@ -46,10 +47,10 @@ export function Header({ title }: HeaderProps) {
   }, []);
 
   return (
-    <header className="h-14 flex items-center justify-between px-3 md:px-6 pl-14 md:pl-6 border-b border-[#1e1e2e] shrink-0">
-      <h1 className="text-lg md:text-xl font-bold text-white truncate">{title}</h1>
+    <header className="h-14 flex items-center justify-between px-3 md:px-6 pl-14 md:pl-6 border-b border-[#1e1e2e] shrink-0 overflow-hidden">
+      <h1 className="text-lg md:text-xl font-bold text-white truncate min-w-0">{title}</h1>
 
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
         <button className="hidden sm:block text-[#9ca3af] hover:text-white transition-colors p-1">
           <Bell size={18} />
         </button>
@@ -68,17 +69,21 @@ export function Header({ title }: HeaderProps) {
           } hidden sm:inline`}
           title="Saldo atual do mês"
         >
-          {currentBalance === null ? "R$ 0,00" : formatCurrency(currentBalance)}
+          {hideBalance ? "R$ ***********" : currentBalance === null ? "R$ 0,00" : formatCurrency(currentBalance)}
         </span>
 
-        <div className="w-8 h-8 rounded-full bg-[#00d4aa] flex items-center justify-center text-[#0d0d0d] text-xs font-bold overflow-hidden">
+        <Link
+          href="/perfil"
+          title="Configurações de perfil"
+          className="w-8 h-8 rounded-full bg-[#00d4aa] flex items-center justify-center text-[#0d0d0d] text-xs font-bold overflow-hidden hover:ring-2 hover:ring-[#00d4aa]/40 transition-all"
+        >
           {user?.profileImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.profileImage} alt="avatar" className="w-full h-full object-cover" />
           ) : (
             initials
           )}
-        </div>
+        </Link>
       </div>
     </header>
   );

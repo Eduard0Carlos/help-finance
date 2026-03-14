@@ -6,6 +6,7 @@ import { Transaction } from "@/models/Transaction";
 import { RecurringTransaction } from "@/models/RecurringTransaction";
 import { getMonthRange } from "@/lib/utils";
 import { getFamilyMemberIds } from "@/lib/family";
+import { generateRecurringDates, toDateKey } from "@/lib/recurrence";
 
 const recurrenceSchema = z.object({
   frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
@@ -37,11 +38,9 @@ type RecurringTemplate = {
   interval: number;
   startDate: Date;
   endDate?: Date | null;
+  excludedDates?: string[];
   createdAt: Date;
 };
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const MAX_STEPS = 5000;
 
 function parseDateInput(value: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -63,105 +62,41 @@ function parseDateInput(value: string): Date | null {
   return parsed;
 }
 
-function toDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function toStartOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function addDays(date: Date, days: number): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-}
-
-function getDaysInMonth(year: number, month: number): number {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-function addMonthsClamped(date: Date, months: number, anchorDay: number): Date {
-  const year = date.getFullYear();
-  const month = date.getMonth() + months;
-  const safeDay = Math.min(anchorDay, getDaysInMonth(year, month));
-  return new Date(year, month, safeDay);
-}
-
-function addByFrequency(
-  date: Date,
-  frequency: RecurringTemplate["frequency"],
-  interval: number,
-  anchorDay: number
-): Date {
-  if (frequency === "daily") return addDays(date, interval);
-  if (frequency === "weekly") return addDays(date, interval * 7);
-  if (frequency === "monthly") return addMonthsClamped(date, interval, anchorDay);
-  return addMonthsClamped(date, interval * 12, anchorDay);
-}
-
 function buildRecurringOccurrences(
   template: RecurringTemplate,
   rangeStart: Date,
   rangeEnd: Date
 ) {
-  const start = toStartOfDay(rangeStart);
-  const end = toStartOfDay(rangeEnd);
-  const templateStart = toStartOfDay(new Date(template.startDate));
-  const templateEnd = template.endDate ? toStartOfDay(new Date(template.endDate)) : null;
+  const generatedDates = generateRecurringDates(
+    {
+      frequency: template.frequency,
+      interval: template.interval,
+      startDate: template.startDate,
+      endDate: template.endDate ?? null,
+    },
+    rangeStart,
+    rangeEnd
+  );
+  const excluded = new Set(template.excludedDates ?? []);
+  const dates = generatedDates.filter((date) => !excluded.has(toDateKey(date)));
 
-  if (templateEnd && templateEnd < start) return [];
-
-  const hardEnd = templateEnd && templateEnd < end ? templateEnd : end;
-  const anchorDay = templateStart.getDate();
-  const interval = template.interval > 0 ? template.interval : 1;
-
-  let current = templateStart;
-  let steps = 0;
-
-  // Fast-forward daily/weekly recurrences to month range start.
-  if (template.frequency === "daily" && current < start) {
-    const diffDays = Math.floor((start.getTime() - current.getTime()) / DAY_MS);
-    const jumps = Math.floor(diffDays / interval);
-    if (jumps > 0) current = addDays(current, jumps * interval);
-  } else if (template.frequency === "weekly" && current < start) {
-    const diffDays = Math.floor((start.getTime() - current.getTime()) / DAY_MS);
-    const jumpDays = interval * 7;
-    const jumps = Math.floor(diffDays / jumpDays);
-    if (jumps > 0) current = addDays(current, jumps * jumpDays);
-  }
-
-  while (current < start && steps < MAX_STEPS) {
-    current = addByFrequency(current, template.frequency, interval, anchorDay);
-    steps++;
-  }
-
-  const occurrences = [];
-  while (current <= hardEnd && steps < MAX_STEPS) {
-    occurrences.push({
-      _id: `recurring:${template._id.toString()}:${toDateKey(current)}`,
+  return dates.map((date) => ({
+      _id: `recurring:${template._id.toString()}:${toDateKey(date)}`,
       userId: template.userId.toString(),
       type: template.type,
       amount: template.amount,
       category: template.category,
       description: template.description,
-      date: current.toISOString(),
+      date: date.toISOString(),
       createdAt: template.createdAt.toISOString(),
       isRecurring: true,
       recurringTemplateId: template._id.toString(),
       recurrence: {
         frequency: template.frequency,
-        interval,
-        endDate: templateEnd ? templateEnd.toISOString() : null,
+        interval: template.interval > 0 ? template.interval : 1,
+        endDate: template.endDate ? new Date(template.endDate).toISOString() : null,
       },
-    });
-
-    current = addByFrequency(current, template.frequency, interval, anchorDay);
-    steps++;
-  }
-
-  return occurrences;
+    }));
 }
 
 export async function GET(req: NextRequest) {

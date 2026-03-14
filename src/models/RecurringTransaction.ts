@@ -12,6 +12,7 @@ export interface IRecurringTransactionDocument extends Document {
   interval: number;
   startDate: Date;
   endDate?: Date | null;
+  excludedDates: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,15 @@ const RecurringTransactionSchema = new Schema<IRecurringTransactionDocument>(
     interval: { type: Number, required: true, min: 1, default: 1 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, default: null },
+    excludedDates: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (values: string[]) =>
+          values.every((value) => /^\d{4}-\d{2}-\d{2}$/.test(value)),
+        message: "excludedDates deve usar formato YYYY-MM-DD",
+      },
+    },
   },
   { timestamps: true }
 );

@@ -24,8 +24,8 @@ export function SpendingDonutChart({
   }
 
   return (
-    <div className="flex items-center gap-4 h-full">
-      <div className="relative shrink-0" style={{ width: 120, height: 120 }}>
+    <div className="flex flex-col sm:flex-row items-center gap-4 h-full min-w-0">
+      <div className="relative shrink-0 w-[104px] h-[104px] sm:w-[120px] sm:h-[120px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

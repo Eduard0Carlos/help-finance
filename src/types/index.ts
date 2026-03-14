@@ -44,6 +44,28 @@ export interface ITransaction {
   recurrence?: ITransactionRecurrence;
 }
 
+export interface ITransactionUpdateInput {
+  type?: TransactionType;
+  amount?: number;
+  category?: string;
+  description?: string;
+  date?: string;
+}
+
+export interface IMonthReference {
+  key: string;
+  year: number;
+  month: number;
+  label: string;
+}
+
+export interface IFinancialSheetRow {
+  key: string;
+  title: string;
+  rowType: "summary" | "category";
+  valuesByMonth: Record<string, number>;
+}
+
 export type InvestmentType = "acao" | "fundo" | "international" | "renda_fixa";
 
 export interface IInvestment {
@@ -95,6 +117,32 @@ export interface ICategoryBreakdown {
 export interface IChartDataPoint {
   label: string;
   value: number;
+}
+
+export interface IProjectionMonth {
+  monthKey: string;
+  label: string;
+  income: number;
+  expense: number;
+  monthBalance: number;
+  finalBalance: number;
+}
+
+export interface IProjectionSummary {
+  totalIncome: number;
+  totalExpense: number;
+  projectedFinalBalance: number;
+}
+
+export interface IProjectionResponse {
+  monthsBack: number;
+  monthsForward: number;
+  currentMonthKey: string;
+  initialBalance: number;
+  automaticInitialBalance: number;
+  includesOneTimeTransactions: boolean;
+  rows: IProjectionMonth[];
+  summary: IProjectionSummary;
 }
 
 export const TRANSACTION_CATEGORIES = [

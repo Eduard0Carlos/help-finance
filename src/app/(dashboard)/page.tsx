@@ -129,7 +129,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="Dashboard" />
 
-      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start">
+      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start min-w-0">
         {/* Row 1 */}
 
         {/* Card: Entradas/Saidas + Limite Diario */}
@@ -187,14 +187,14 @@ export default function DashboardPage() {
         {/* Row 2 */}
 
         {/* Card: Investimentos */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 min-w-0 overflow-hidden">
           <p className="text-xs text-[#9ca3af] mb-3">Investimentos</p>
           {investments.length === 0 ? (
             <p className="text-[#9ca3af] text-sm text-center py-4">
               Nenhum investimento cadastrado
             </p>
           ) : (
-            <div className="flex gap-3 overflow-x-auto pb-1">
+            <div className="flex gap-3 overflow-x-auto pb-1 min-w-0">
               {investments.slice(0, 4).map((inv) => (
                 <div
                   key={inv._id}
@@ -229,7 +229,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Card: Atalhos */}
-        <Card>
+        <Card className="min-w-0">
           <p className="text-xs text-[#9ca3af] mb-3">Atalhos</p>
           <div className="flex items-center gap-3 flex-wrap">
             <Link

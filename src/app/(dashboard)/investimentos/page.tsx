@@ -183,9 +183,9 @@ export default function InvestimentosPage() {
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="Investimentos" />
 
-      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start">
+      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start min-w-0">
         {/* Column 1 */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 min-w-0">
           <Card>
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-[#9ca3af]">Carteira de Investimentos</p>
@@ -214,7 +214,7 @@ export default function InvestimentosPage() {
         </div>
 
         {/* Column 2 - Investments List */}
-        <Card className="flex flex-col overflow-hidden">
+        <Card className="flex flex-col overflow-hidden min-w-0">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-[#9ca3af]">Investimentos</p>
           </div>
@@ -293,7 +293,7 @@ export default function InvestimentosPage() {
         </Card>
 
         {/* Column 3 */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 min-w-0">
           {/* Portfolio Donut */}
           <Card gradient>
             <p className="text-xs text-[#9ca3af] mb-2">Carteira de Investimentos</p>

@@ -37,11 +37,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d] p-4">
-      <div className="w-full max-w-4xl flex rounded-2xl overflow-hidden shadow-2xl border border-[#2a2a3e]">
+    <div className="min-h-dvh flex items-center justify-center bg-[#0d0d0d] px-3 py-4 md:p-4">
+      <div className="w-full max-w-md md:max-w-4xl flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-2xl border border-[#2a2a3e] min-w-0">
         {/* Left - Form */}
-        <div className="flex-1 bg-gradient-to-br from-[#141420] to-[#0d1a18] p-10 flex flex-col items-center justify-center">
-          <h1 className="text-3xl font-bold text-white mb-8">Entrar</h1>
+        <div className="flex-1 bg-gradient-to-br from-[#141420] to-[#0d1a18] p-5 md:p-10 flex flex-col items-center justify-center min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">Entrar</h1>
 
           {/* Social buttons (disabled placeholder) */}
           <div className="flex gap-3 mb-6">
@@ -60,20 +60,20 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="flex items-center w-full max-w-xs mb-6 gap-3">
+          <div className="flex items-center w-full max-w-xs mb-6 gap-3 min-w-0">
             <div className="flex-1 h-px bg-[#2a2a3e]" />
             <span className="text-[#9ca3af] text-sm">ou</span>
             <div className="flex-1 h-px bg-[#2a2a3e]" />
           </div>
 
-          <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-3">
+          <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-3 min-w-0">
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-2.5 text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-sm"
+              className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-3 min-h-[44px] text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-base md:text-sm"
             />
             <input
               type="password"
@@ -81,7 +81,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-2.5 text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-sm"
+              className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-3 min-h-[44px] text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-base md:text-sm"
             />
 
             {error && (
@@ -91,7 +91,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 bg-[#2a2a3e] hover:bg-[#3a3a5e] disabled:opacity-50 text-white font-semibold rounded-full py-2.5 transition-colors text-sm tracking-widest uppercase"
+              className="mt-2 bg-[#2a2a3e] hover:bg-[#3a3a5e] disabled:opacity-50 text-white font-semibold rounded-full py-3 min-h-[44px] transition-colors text-sm tracking-widest uppercase"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
@@ -99,14 +99,14 @@ export default function LoginPage() {
         </div>
 
         {/* Right - Branding */}
-        <div className="flex-1 bg-gradient-to-br from-[#0d1a18] to-[#0a1a14] flex flex-col items-center justify-center p-10 gap-6">
-          <h2 className="text-4xl font-bold text-white text-center">Help Finance</h2>
+        <div className="flex-1 bg-gradient-to-br from-[#0d1a18] to-[#0a1a14] flex flex-col items-center justify-center p-5 md:p-10 gap-4 md:gap-6 min-w-0">
+          <h2 className="text-2xl md:text-4xl font-bold text-white text-center">Help Finance</h2>
           <p className="text-[#9ca3af] text-center text-sm leading-relaxed max-w-xs">
             Bem vindo de volta a melhor plataforma para controlar as suas finanças
           </p>
           <Link
             href="/cadastro"
-            className="border border-white text-white rounded-full px-8 py-2.5 text-sm font-semibold hover:bg-white hover:text-[#0d0d0d] transition-colors tracking-widest uppercase"
+            className="border border-white text-white rounded-full px-6 md:px-8 py-3 min-h-[44px] text-sm font-semibold hover:bg-white hover:text-[#0d0d0d] transition-colors tracking-widest uppercase"
           >
             Criar Conta
           </Link>

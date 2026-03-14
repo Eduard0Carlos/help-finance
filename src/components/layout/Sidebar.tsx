@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   FileText,
   TrendingUp,
+  LineChart,
   MessageSquare,
   User,
   Menu,
@@ -19,6 +20,7 @@ const SIDEBAR_STORAGE_KEY = "hf.sidebar.expanded";
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/movimentacoes", icon: FileText, label: "Movimentações" },
+  { href: "/projecao", icon: LineChart, label: "Projeção" },
   { href: "/investimentos", icon: TrendingUp, label: "Investimentos" },
   { href: "/chat", icon: MessageSquare, label: "Chat" },
   { href: "/perfil", icon: User, label: "Perfil" },

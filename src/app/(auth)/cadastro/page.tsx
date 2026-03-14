@@ -71,25 +71,25 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d] p-4">
-      <div className="w-full max-w-4xl flex rounded-2xl overflow-hidden shadow-2xl border border-[#2a2a3e]">
+    <div className="min-h-dvh flex items-center justify-center bg-[#0d0d0d] px-3 py-4 md:p-4">
+      <div className="w-full max-w-md md:max-w-4xl flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-2xl border border-[#2a2a3e] min-w-0">
         {/* Left - Branding */}
-        <div className="flex-1 bg-gradient-to-br from-[#0d1a18] to-[#0a1a14] flex flex-col items-center justify-center p-10 gap-6">
-          <h2 className="text-4xl font-bold text-white text-center">Help Finance</h2>
+        <div className="flex-1 bg-gradient-to-br from-[#0d1a18] to-[#0a1a14] flex flex-col items-center justify-center p-5 md:p-10 gap-4 md:gap-6 min-w-0">
+          <h2 className="text-2xl md:text-4xl font-bold text-white text-center">Help Finance</h2>
           <p className="text-[#9ca3af] text-center text-sm leading-relaxed max-w-xs">
             Bem vindo a melhor plataforma para controlar as suas finanças
           </p>
           <Link
             href="/login"
-            className="border border-white text-white rounded-full px-8 py-2.5 text-sm font-semibold hover:bg-white hover:text-[#0d0d0d] transition-colors tracking-widest uppercase"
+            className="border border-white text-white rounded-full px-6 md:px-8 py-3 min-h-[44px] text-sm font-semibold hover:bg-white hover:text-[#0d0d0d] transition-colors tracking-widest uppercase"
           >
             Entrar
           </Link>
         </div>
 
         {/* Right - Form */}
-        <div className="flex-1 bg-gradient-to-br from-[#141420] to-[#0d1a18] p-10 flex flex-col items-center justify-center">
-          <h1 className="text-3xl font-bold text-white mb-8">Criar Conta</h1>
+        <div className="flex-1 bg-gradient-to-br from-[#141420] to-[#0d1a18] p-5 md:p-10 flex flex-col items-center justify-center min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">Criar Conta</h1>
 
           {/* Social buttons (disabled placeholder) */}
           <div className="flex gap-3 mb-6">
@@ -108,21 +108,21 @@ export default function CadastroPage() {
             ))}
           </div>
 
-          <div className="flex items-center w-full max-w-xs mb-6 gap-3">
+          <div className="flex items-center w-full max-w-xs mb-6 gap-3 min-w-0">
             <div className="flex-1 h-px bg-[#2a2a3e]" />
             <span className="text-[#9ca3af] text-sm">ou</span>
             <div className="flex-1 h-px bg-[#2a2a3e]" />
           </div>
 
           {step === "info" ? (
-            <form onSubmit={handleContinue} className="w-full max-w-xs flex flex-col gap-3">
+            <form onSubmit={handleContinue} className="w-full max-w-xs flex flex-col gap-3 min-w-0">
               <input
                 type="text"
                 placeholder="Nome"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-2.5 text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-sm"
+                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-3 min-h-[44px] text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-base md:text-sm"
               />
               <input
                 type="email"
@@ -130,25 +130,25 @@ export default function CadastroPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-2.5 text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-sm"
+                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-3 min-h-[44px] text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-base md:text-sm"
               />
               {error && <p className="text-red-400 text-xs text-center">{error}</p>}
               <button
                 type="submit"
-                className="mt-2 bg-[#2a2a3e] hover:bg-[#3a3a5e] text-white font-semibold rounded-full py-2.5 transition-colors text-sm tracking-widest uppercase"
+                className="mt-2 bg-[#2a2a3e] hover:bg-[#3a3a5e] text-white font-semibold rounded-full py-3 min-h-[44px] transition-colors text-sm tracking-widest uppercase"
               >
                 Continuar
               </button>
             </form>
           ) : (
-            <form onSubmit={handleRegister} className="w-full max-w-xs flex flex-col gap-3">
+            <form onSubmit={handleRegister} className="w-full max-w-xs flex flex-col gap-3 min-w-0">
               <input
                 type="password"
                 placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-2.5 text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-sm"
+                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-3 min-h-[44px] text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-base md:text-sm"
               />
               <input
                 type="password"
@@ -156,13 +156,13 @@ export default function CadastroPage() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
-                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-2.5 text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-sm"
+                className="bg-transparent border border-[#2a2a3e] rounded-full px-4 py-3 min-h-[44px] text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#00d4aa] transition-colors text-base md:text-sm"
               />
               {error && <p className="text-red-400 text-xs text-center">{error}</p>}
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 bg-[#2a2a3e] hover:bg-[#3a3a5e] disabled:opacity-50 text-white font-semibold rounded-full py-2.5 transition-colors text-sm tracking-widest uppercase"
+                className="mt-2 bg-[#2a2a3e] hover:bg-[#3a3a5e] disabled:opacity-50 text-white font-semibold rounded-full py-3 min-h-[44px] transition-colors text-sm tracking-widest uppercase"
               >
                 {loading ? "Criando..." : "Criar Conta"}
               </button>
