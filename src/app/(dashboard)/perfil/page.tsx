@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "@/components/layout/SessionContext";
 import { formatCurrency } from "@/lib/utils";
 import { INVESTMENT_PROFILES } from "@/types";
 import { LogOut } from "lucide-react";
 
 export default function PerfilPage() {
-  const { data: session } = useSession();
+  const { user, logout } = useSession();
   const [dailyLimit, setDailyLimit] = useState(350);
   const [investmentGoal, setInvestmentGoal] = useState(4000);
   const [investmentProfile, setInvestmentProfile] = useState(1);
@@ -52,11 +52,11 @@ export default function PerfilPage() {
           <Card>
             <div className="flex items-center gap-4 mb-4">
               <div className="w-14 h-14 rounded-full bg-[#00d4aa] flex items-center justify-center text-[#0d0d0d] text-xl font-bold">
-                {session?.user?.name?.charAt(0).toUpperCase() ?? "U"}
+                {user?.name?.charAt(0).toUpperCase() ?? "U"}
               </div>
               <div>
-                <p className="text-white font-bold text-lg">{session?.user?.name}</p>
-                <p className="text-[#9ca3af] text-sm">{session?.user?.email}</p>
+                <p className="text-white font-bold text-lg">{user?.name}</p>
+                <p className="text-[#9ca3af] text-sm">{user?.email}</p>
               </div>
             </div>
           </Card>
@@ -121,7 +121,7 @@ export default function PerfilPage() {
 
           <Card>
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={logout}
               className="flex items-center gap-2 text-[#ef4444] hover:text-red-300 transition-colors text-sm font-medium"
             >
               <LogOut size={16} />

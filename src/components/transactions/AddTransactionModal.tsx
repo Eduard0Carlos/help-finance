@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { TRANSACTION_CATEGORIES } from "@/types";
+import { RECURRENCE_FREQUENCIES, RecurrenceFrequency, TRANSACTION_CATEGORIES } from "@/types";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -17,6 +17,10 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
   const [category, setCategory] = useState("outros");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0] ?? "");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>("monthly");
+  const [recurrenceInterval, setRecurrenceInterval] = useState("1");
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,11 +32,26 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
       setError("Valor inválido");
       return;
     }
+
+    const parsedInterval = Number.parseInt(recurrenceInterval, 10);
+    if (isRecurring && (!Number.isInteger(parsedInterval) || parsedInterval <= 0)) {
+      setError("Intervalo de recorrência inválido");
+      return;
+    }
+
+    const recurrence = isRecurring
+      ? {
+          frequency: recurrenceFrequency,
+          interval: parsedInterval,
+          endDate: recurrenceEndDate || undefined,
+        }
+      : undefined;
+
     setLoading(true);
     const res = await fetch("/api/transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, amount: numAmount, category, description, date }),
+      body: JSON.stringify({ type, amount: numAmount, category, description, date, recurrence }),
     });
     setLoading(false);
     if (!res.ok) {
@@ -43,6 +62,10 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
     setDescription("");
     setCategory("outros");
     setDate(new Date().toISOString().split("T")[0] ?? "");
+    setIsRecurring(false);
+    setRecurrenceFrequency("monthly");
+    setRecurrenceInterval("1");
+    setRecurrenceEndDate("");
     onSuccess();
     onClose();
   }
@@ -120,6 +143,52 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
           required
           className={inputClass}
         />
+
+        <label className="flex items-center justify-between gap-3 border border-[#2a2a3e] rounded-lg px-3 py-2.5">
+          <span className="text-sm text-white">Movimentação recorrente</span>
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+            className="h-4 w-4 accent-[#00d4aa]"
+          />
+        </label>
+
+        {isRecurring && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={recurrenceFrequency}
+                onChange={(e) => setRecurrenceFrequency(e.target.value as RecurrenceFrequency)}
+                className={inputClass}
+              >
+                {RECURRENCE_FREQUENCIES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="number"
+                min={1}
+                step={1}
+                placeholder="A cada X"
+                value={recurrenceInterval}
+                onChange={(e) => setRecurrenceInterval(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <input
+              type="date"
+              value={recurrenceEndDate}
+              min={date}
+              onChange={(e) => setRecurrenceEndDate(e.target.value)}
+              className={inputClass}
+            />
+          </>
+        )}
 
         {error && <p className="text-red-400 text-xs">{error}</p>}
 

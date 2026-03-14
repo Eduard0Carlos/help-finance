@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { Investment } from "@/models/Investment";
 
@@ -13,20 +13,20 @@ const createSchema = z.object({
   purchaseDate: z.string(),
 });
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function GET(req: NextRequest) {
+  const session = getSession(req);
+  if (!session) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   await connectDB();
-  const investments = await Investment.find({ userId: session.user.id }).sort({ createdAt: -1 });
+  const investments = await Investment.find({ userId: session.id }).sort({ createdAt: -1 });
   return NextResponse.json(investments);
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const session = getSession(req);
+  if (!session) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   await connectDB();
   const investment = await Investment.create({
-    userId: session.user.id,
+    userId: session.id,
     ...parsed.data,
     ticker: parsed.data.ticker.toUpperCase(),
     purchaseDate: new Date(parsed.data.purchaseDate),

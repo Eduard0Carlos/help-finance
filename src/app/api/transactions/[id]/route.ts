@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { Transaction } from "@/models/Transaction";
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const session = getSession(req);
+  if (!session) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
@@ -17,7 +17,7 @@ export async function DELETE(
 
   const tx = await Transaction.findOneAndDelete({
     _id: id,
-    userId: session.user.id,
+    userId: session.id,
   });
 
   if (!tx) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });

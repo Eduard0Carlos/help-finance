@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "@/components/layout/SessionContext";
 
 type Step = "info" | "password";
 
 export default function CadastroPage() {
   const router = useRouter();
+  const { refresh } = useSession();
   const [step, setStep] = useState<Step>("info");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function CadastroPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleContinue(e: React.FormEvent) {
+  function handleContinue(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!name.trim() || !email.trim()) return;
@@ -50,19 +51,23 @@ export default function CadastroPage() {
       return;
     }
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+    // Auto-login after registration
+    const loginRes = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (result?.error) {
-      setError("Conta criada mas erro ao fazer login");
+    if (!loginRes.ok) {
+      setError("Conta criada! Faça login para continuar.");
       setLoading(false);
-    } else {
-      router.push("/");
-      router.refresh();
+      router.push("/login");
+      return;
     }
+
+    await refresh();
+    router.push("/");
+    router.refresh();
   }
 
   return (

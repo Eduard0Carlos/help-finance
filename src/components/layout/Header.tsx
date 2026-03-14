@@ -1,23 +1,49 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Bell, Eye, EyeOff } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/layout/SessionContext";
 import { useBalance } from "./BalanceContext";
+import { formatCurrency } from "@/lib/utils";
+import { ITransaction } from "@/types";
 
 interface HeaderProps {
   title: string;
 }
 
 export function Header({ title }: HeaderProps) {
-  const { data: session } = useSession();
+  const { user } = useSession();
   const { hideBalance, toggleBalance } = useBalance();
+  const [currentBalance, setCurrentBalance] = useState<number | null>(null);
 
-  const initials = session?.user?.name
+  const initials = user?.name
     ?.split(" ")
     .slice(0, 2)
     .map((n) => n[0])
     .join("")
     .toUpperCase() ?? "HF";
+
+  useEffect(() => {
+    async function loadCurrentBalance() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const res = await fetch(`/api/transactions?year=${year}&month=${month}`);
+      if (!res.ok) return;
+
+      const transactions = (await res.json()) as ITransaction[];
+      const income = transactions
+        .filter((t) => t.type === "income")
+        .reduce((sum, t) => sum + t.amount, 0);
+      const expense = transactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      setCurrentBalance(income - expense);
+    }
+
+    loadCurrentBalance();
+  }, []);
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-[#1e1e2e] shrink-0">
@@ -36,14 +62,19 @@ export function Header({ title }: HeaderProps) {
           {hideBalance ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
 
-        <span className="text-[#9ca3af] text-sm">
-          R$ {hideBalance ? "***********" : "•••••••••"}
+        <span
+          className={`text-sm font-semibold ${
+            (currentBalance ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]"
+          }`}
+          title="Saldo atual do mês"
+        >
+          {currentBalance === null ? "R$ 0,00" : formatCurrency(currentBalance)}
         </span>
 
         <div className="w-8 h-8 rounded-full bg-[#00d4aa] flex items-center justify-center text-[#0d0d0d] text-xs font-bold overflow-hidden">
-          {session?.user?.image ? (
+          {user?.profileImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={session.user.image} alt="avatar" className="w-full h-full object-cover" />
+            <img src={user.profileImage} alt="avatar" className="w-full h-full object-cover" />
           ) : (
             initials
           )}

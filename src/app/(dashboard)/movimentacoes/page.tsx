@@ -133,6 +133,7 @@ export default function MovimentacoesPage() {
   const mask = (v: string) => (hideBalance ? "R$ ***" : v);
 
   async function deleteTransaction(id: string) {
+    if (id.startsWith("recurring:")) return;
     await fetch(`/api/transactions/${id}`, { method: "DELETE" });
     setTransactions((prev) => prev.filter((t) => t._id !== id));
   }
@@ -207,7 +208,14 @@ export default function MovimentacoesPage() {
                             <p className="text-white text-xs font-medium truncate">
                               {tx.description}
                             </p>
-                            <p className="text-[#9ca3af] text-[10px]">{formatDate(tx.date)}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-[#9ca3af] text-[10px]">{formatDate(tx.date)}</p>
+                              {tx.isRecurring && (
+                                <span className="text-[10px] text-[#00d4aa] border border-[#00d4aa]/30 px-1 py-0.5 rounded">
+                                  recorrente
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -219,12 +227,14 @@ export default function MovimentacoesPage() {
                             {tx.type === "income" ? "+" : "-"}
                             {mask(formatCurrency(tx.amount))}
                           </span>
-                          <button
-                            onClick={() => deleteTransaction(tx._id)}
-                            className="text-[#9ca3af] hover:text-[#ef4444] transition-colors opacity-0 group-hover:opacity-100"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                          {!tx.isRecurring && (
+                            <button
+                              onClick={() => deleteTransaction(tx._id)}
+                              className="text-[#9ca3af] hover:text-[#ef4444] transition-colors opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

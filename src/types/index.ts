@@ -10,6 +10,13 @@ export interface IUser {
 }
 
 export type TransactionType = "income" | "expense";
+export type RecurrenceFrequency = "daily" | "weekly" | "monthly" | "yearly";
+
+export interface ITransactionRecurrence {
+  frequency: RecurrenceFrequency;
+  interval: number;
+  endDate?: string | null;
+}
 
 export interface ITransaction {
   _id: string;
@@ -20,6 +27,9 @@ export interface ITransaction {
   description: string;
   date: string;
   createdAt: string;
+  isRecurring?: boolean;
+  recurringTemplateId?: string;
+  recurrence?: ITransactionRecurrence;
 }
 
 export type InvestmentType = "acao" | "fundo" | "international" | "renda_fixa";
@@ -85,6 +95,13 @@ export const TRANSACTION_CATEGORIES = [
   { value: "salario", label: "Salário", color: "#22c55e" },
   { value: "investimento", label: "Investimento", color: "#00d4aa" },
   { value: "outros", label: "Outros", color: "#6b7280" },
+] as const;
+
+export const RECURRENCE_FREQUENCIES = [
+  { value: "daily", label: "Diária" },
+  { value: "weekly", label: "Semanal" },
+  { value: "monthly", label: "Mensal" },
+  { value: "yearly", label: "Anual" },
 ] as const;
 
 export const INVESTMENT_PROFILES = [
