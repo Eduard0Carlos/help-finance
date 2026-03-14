@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Help Finance
 
-## Getting Started
+A melhor plataforma para controlar as suas finanças — gerenciador financeiro completo com dashboard, movimentações, investimentos e chat.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router) + TypeScript
+- **Banco de Dados:** MongoDB Atlas + Mongoose
+- **Autenticação:** NextAuth.js v5 (email/senha)
+- **Gráficos:** Recharts
+- **Estilização:** Tailwind CSS v4 (dark theme)
+- **API de Cotações:** brapi.dev
+- **Deploy:** Vercel
+
+## Funcionalidades
+
+- Login e Cadastro com email/senha
+- **Dashboard:** resumo do mês, gráficos, investimentos, atalhos
+- **Movimentações:** lançamentos de receitas e despesas por mês
+- **Investimentos:** carteira com cotações em tempo real via brapi.dev
+- **Chat:** interface de chatbot (UI pronta, IA a implementar)
+- **Perfil:** configurações de limite diário, meta e perfil de investidor
+
+## Configuração Local
+
+1. Instale as dependências:
+
+```bash
+npm install
+```
+
+2. Crie o arquivo `.env.local` na raiz com as variáveis:
+
+```env
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/help-finance
+NEXTAUTH_SECRET=sua-chave-secreta-aqui
+NEXTAUTH_URL=http://localhost:3000
+BRAPI_TOKEN=seu-token-brapi-aqui
+```
+
+3. Inicie o servidor de desenvolvimento:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy na Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Crie um projeto na [Vercel](https://vercel.com) apontando para este repositório.
+2. Configure as variáveis de ambiente no painel da Vercel:
+   - `MONGODB_URI`
+   - `NEXTAUTH_SECRET` (gere com `openssl rand -base64 32`)
+   - `NEXTAUTH_URL` (URL do seu app na Vercel, ex: `https://help-finance.vercel.app`)
+   - `BRAPI_TOKEN` (opcional, obtenha em https://brapi.dev)
+3. Faça o deploy — a Vercel detecta Next.js automaticamente.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estrutura do Projeto
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/
+│   ├── (auth)/login, /cadastro     # Páginas de autenticação
+│   ├── (dashboard)/                # App principal (requer auth)
+│   │   ├── page.tsx                # Dashboard
+│   │   ├── movimentacoes/          # Movimentações
+│   │   ├── investimentos/          # Investimentos
+│   │   ├── chat/                   # Chat (UI)
+│   │   └── perfil/                 # Configurações
+│   └── api/                        # API Routes
+├── components/
+│   ├── ui/                         # Card, Button, ProgressBar, Modal, MonthSelector
+│   ├── charts/                     # FinanceLineChart, SpendingDonutChart, ProgressRing
+│   ├── layout/                     # Sidebar, Header, BalanceContext
+│   ├── transactions/               # AddTransactionModal
+│   └── investments/                # AddInvestmentModal
+├── lib/                            # mongodb.ts, auth.ts, utils.ts
+├── models/                         # User, Transaction, Investment (Mongoose)
+└── types/                          # TypeScript interfaces
+```
