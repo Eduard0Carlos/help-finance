@@ -46,11 +46,11 @@ export function Header({ title }: HeaderProps) {
   }, []);
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-[#1e1e2e] shrink-0">
-      <h1 className="text-xl font-bold text-white">{title}</h1>
+    <header className="h-14 flex items-center justify-between px-3 md:px-6 pl-14 md:pl-6 border-b border-[#1e1e2e] shrink-0">
+      <h1 className="text-lg md:text-xl font-bold text-white truncate">{title}</h1>
 
-      <div className="flex items-center gap-3">
-        <button className="text-[#9ca3af] hover:text-white transition-colors p-1">
+      <div className="flex items-center gap-2 md:gap-3">
+        <button className="hidden sm:block text-[#9ca3af] hover:text-white transition-colors p-1">
           <Bell size={18} />
         </button>
 
@@ -65,7 +65,7 @@ export function Header({ title }: HeaderProps) {
         <span
           className={`text-sm font-semibold ${
             (currentBalance ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]"
-          }`}
+          } hidden sm:inline`}
           title="Saldo atual do mês"
         >
           {currentBalance === null ? "R$ 0,00" : formatCurrency(currentBalance)}

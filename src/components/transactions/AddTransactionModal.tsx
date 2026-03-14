@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { RECURRENCE_FREQUENCIES, RecurrenceFrequency, TRANSACTION_CATEGORIES } from "@/types";
+import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -48,13 +49,13 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
       : undefined;
 
     setLoading(true);
-    const res = await fetch("/api/transactions", {
+    const result = await performMutationWithOfflineQueue({
+      url: "/api/transactions",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, amount: numAmount, category, description, date, recurrence }),
+      body: { type, amount: numAmount, category, description, date, recurrence },
     });
     setLoading(false);
-    if (!res.ok) {
+    if (!result.ok) {
       setError("Erro ao salvar");
       return;
     }

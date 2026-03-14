@@ -129,7 +129,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="Dashboard" />
 
-      <main className="flex-1 overflow-auto p-5 grid grid-cols-3 gap-4 content-start">
+      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start">
         {/* Row 1 */}
 
         {/* Card: Entradas/Saidas + Limite Diario */}
@@ -187,7 +187,7 @@ export default function DashboardPage() {
         {/* Row 2 */}
 
         {/* Card: Investimentos */}
-        <Card className="col-span-2">
+        <Card className="lg:col-span-2">
           <p className="text-xs text-[#9ca3af] mb-3">Investimentos</p>
           {investments.length === 0 ? (
             <p className="text-[#9ca3af] text-sm text-center py-4">

@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionContextProvider } from "@/components/layout/SessionContext";
+import { RegisterServiceWorker } from "@/components/pwa/RegisterServiceWorker";
+import { ConnectivityBanner } from "@/components/pwa/ConnectivityBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +18,23 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Help Finance",
   description: "A melhor plataforma para controlar as suas finanças",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "HelpFinance",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0d0d0d",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -26,7 +45,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SessionContextProvider>{children}</SessionContextProvider>
+        <SessionContextProvider>
+          <RegisterServiceWorker />
+          <ConnectivityBanner />
+          {children}
+        </SessionContextProvider>
       </body>
     </html>
   );

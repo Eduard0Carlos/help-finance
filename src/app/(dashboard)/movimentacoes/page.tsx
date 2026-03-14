@@ -25,6 +25,7 @@ import {
   getCategoryColor,
 } from "@/lib/utils";
 import { TrendingUp, TrendingDown, CheckCircle, Trash2, Eye, EyeOff } from "lucide-react";
+import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 
 interface Month {
   year: number;
@@ -134,15 +135,20 @@ export default function MovimentacoesPage() {
 
   async function deleteTransaction(id: string) {
     if (id.startsWith("recurring:")) return;
-    await fetch(`/api/transactions/${id}`, { method: "DELETE" });
-    setTransactions((prev) => prev.filter((t) => t._id !== id));
+    const result = await performMutationWithOfflineQueue({
+      url: `/api/transactions/${id}`,
+      method: "DELETE",
+    });
+    if (result.ok) {
+      setTransactions((prev) => prev.filter((t) => t._id !== id));
+    }
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="Movimentações" />
 
-      <main className="flex-1 overflow-auto p-5 grid grid-cols-3 gap-4 content-start">
+      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start">
         {/* Column 1 */}
         <div className="flex flex-col gap-4">
           {/* Saldo */}

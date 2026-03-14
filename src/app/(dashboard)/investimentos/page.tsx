@@ -19,6 +19,7 @@ import { useBalance } from "@/components/layout/BalanceContext";
 import { IInvestment, ICategoryBreakdown, IChartDataPoint, INVESTMENT_PROFILES } from "@/types";
 import { formatCurrency, getMonthName } from "@/lib/utils";
 import { Eye, EyeOff, TrendingUp, TrendingDown, Trash2 } from "lucide-react";
+import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 
 interface Month {
   year: number;
@@ -169,15 +170,20 @@ export default function InvestimentosPage() {
   const mask = (v: string) => (hideBalance ? "R$ ***" : v);
 
   async function deleteInvestment(id: string) {
-    await fetch(`/api/investments/${id}`, { method: "DELETE" });
-    setInvestments((prev) => prev.filter((i) => i._id !== id));
+    const result = await performMutationWithOfflineQueue({
+      url: `/api/investments/${id}`,
+      method: "DELETE",
+    });
+    if (result.ok) {
+      setInvestments((prev) => prev.filter((i) => i._id !== id));
+    }
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="Investimentos" />
 
-      <main className="flex-1 overflow-auto p-5 grid grid-cols-3 gap-4 content-start">
+      <main className="flex-1 overflow-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4 content-start">
         {/* Column 1 */}
         <div className="flex flex-col gap-4">
           <Card>
@@ -301,7 +307,14 @@ export default function InvestimentosPage() {
           <Card className="flex flex-col" style={{ minHeight: 160 }}>
             <p className="text-xs text-[#9ca3af] mb-2">Variação</p>
             <div className="flex-1 min-h-0">
-              <FinanceLineChart expenseData={variationData} incomeData={dummyIncome} />
+              <FinanceLineChart
+                expenseData={variationData}
+                incomeData={dummyIncome}
+                expenseLabel="Base"
+                incomeLabel="Estimado"
+                expenseColor="#3b82f6"
+                incomeColor="#22c55e"
+              />
             </div>
           </Card>
 

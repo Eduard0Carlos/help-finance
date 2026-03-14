@@ -8,6 +8,7 @@ import { useSession } from "@/components/layout/SessionContext";
 import { formatCurrency } from "@/lib/utils";
 import { IFamilyInvite, INVESTMENT_PROFILES } from "@/types";
 import { LogOut } from "lucide-react";
+import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 
 export default function PerfilPage() {
   const { user, logout, refresh } = useSession();
@@ -55,14 +56,19 @@ export default function PerfilPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch("/api/user", {
+    const result = await performMutationWithOfflineQueue({
+      url: "/api/user",
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dailyLimit, investmentGoal, investmentProfile }),
+      body: { dailyLimit, investmentGoal, investmentProfile },
     });
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (result.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      if (result.queued) {
+        setFamilyMessage("Sem conexão: configurações enfileiradas para sincronizar.");
+      }
+    }
   }
 
   async function handleSendFamilyInvite(e: React.FormEvent) {
@@ -131,7 +137,7 @@ export default function PerfilPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header title="Perfil" />
-      <main className="flex-1 overflow-auto p-5 max-w-lg mx-auto w-full">
+      <main className="flex-1 overflow-auto p-3 md:p-5 max-w-lg mx-auto w-full">
         <div className="flex flex-col gap-4">
           <Card>
             <div className="flex items-center gap-4 mb-4">

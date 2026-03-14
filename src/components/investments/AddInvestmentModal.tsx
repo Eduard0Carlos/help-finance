@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { INVESTMENT_TYPES } from "@/types";
+import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 
 interface AddInvestmentModalProps {
   open: boolean;
@@ -33,20 +34,20 @@ export function AddInvestmentModal({ open, onClose, onSuccess }: AddInvestmentMo
       return;
     }
     setLoading(true);
-    const res = await fetch("/api/investments", {
+    const result = await performMutationWithOfflineQueue({
+      url: "/api/investments",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: {
         ticker: ticker.toUpperCase(),
         name: name || ticker.toUpperCase(),
         type,
         quantity: qty,
         averagePrice: price,
         purchaseDate,
-      }),
+      },
     });
     setLoading(false);
-    if (!res.ok) {
+    if (!result.ok) {
       setError("Erro ao salvar");
       return;
     }
