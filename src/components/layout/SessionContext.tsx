@@ -8,6 +8,12 @@ export interface SessionUser {
   name: string;
   email: string;
   profileImage?: string | null;
+  familyId?: string | null;
+  familyPartner?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
 }
 
 interface SessionContextValue {

@@ -6,6 +6,18 @@ export interface IUser {
   dailyLimit: number;
   investmentGoal: number;
   investmentProfile: number; // 1-5
+  familyId?: string | null;
+  createdAt: string;
+}
+
+export interface IFamilyInvite {
+  _id: string;
+  fromUserId: string;
+  toUserId: string;
+  fromUserName?: string;
+  fromUserEmail?: string;
+  status: "pending" | "accepted" | "rejected" | "cancelled";
+  expiresAt: string;
   createdAt: string;
 }
 

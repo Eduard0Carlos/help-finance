@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { Investment } from "@/models/Investment";
+import { getFamilyMemberIds } from "@/lib/family";
 
 const createSchema = z.object({
   ticker: z.string().min(1),
@@ -20,7 +21,8 @@ export async function GET(req: NextRequest) {
   }
 
   await connectDB();
-  const investments = await Investment.find({ userId: session.id }).sort({ createdAt: -1 });
+  const memberIds = await getFamilyMemberIds(session.id);
+  const investments = await Investment.find({ userId: { $in: memberIds } }).sort({ createdAt: -1 });
   return NextResponse.json(investments);
 }
 

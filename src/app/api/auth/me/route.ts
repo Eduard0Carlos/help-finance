@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
+import { getFamilyPartner } from "@/lib/family";
 
 export async function GET(req: NextRequest) {
   const session = getSession(req);
@@ -15,6 +16,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
   }
 
+  const familyPartner = await getFamilyPartner(session.id);
+
   return NextResponse.json({
     id: user._id.toString(),
     name: user.name,
@@ -23,5 +26,7 @@ export async function GET(req: NextRequest) {
     dailyLimit: user.dailyLimit,
     investmentGoal: user.investmentGoal,
     investmentProfile: user.investmentProfile,
+    familyId: user.familyId ?? null,
+    familyPartner,
   });
 }

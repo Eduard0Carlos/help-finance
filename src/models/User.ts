@@ -8,6 +8,7 @@ export interface IUserDocument extends Document {
   dailyLimit: number;
   investmentGoal: number;
   investmentProfile: number;
+  familyId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +22,7 @@ const UserSchema = new Schema<IUserDocument>(
     dailyLimit: { type: Number, default: 350 },
     investmentGoal: { type: Number, default: 4000 },
     investmentProfile: { type: Number, default: 1, min: 1, max: 5 },
+    familyId: { type: String, index: true, default: null },
   },
   { timestamps: true }
 );

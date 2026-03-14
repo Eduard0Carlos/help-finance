@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Transaction } from "@/models/Transaction";
 import { RecurringTransaction } from "@/models/RecurringTransaction";
 import { getMonthRange } from "@/lib/utils";
+import { getFamilyMemberIds } from "@/lib/family";
 
 const recurrenceSchema = z.object({
   frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
@@ -175,14 +176,15 @@ export async function GET(req: NextRequest) {
 
   await connectDB();
   const { start, end } = getMonthRange(year, month);
+  const memberIds = await getFamilyMemberIds(session.id);
 
   const [transactions, recurringTemplates] = await Promise.all([
     Transaction.find({
-      userId: session.id,
+      userId: { $in: memberIds },
       date: { $gte: start, $lte: end },
     }).sort({ date: -1 }),
     RecurringTransaction.find({
-      userId: session.id,
+      userId: { $in: memberIds },
       startDate: { $lte: end },
       $or: [{ endDate: null }, { endDate: { $exists: false } }, { endDate: { $gte: start } }],
     }).sort({ startDate: -1 }),
