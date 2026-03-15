@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -78,7 +79,16 @@ export function Sidebar() {
             >
               <X size={18} />
             </button>
-            <p className="text-white text-sm font-semibold px-2">HelpFinance</p>
+            <div className="flex items-center gap-2 px-2">
+              <Image
+                src="/branding/logo.png"
+                alt="Logo HelpFinance"
+                width={28}
+                height={28}
+                className="rounded-lg"
+              />
+              <p className="text-white text-sm font-semibold">HelpFinance</p>
+            </div>
             <nav className="flex flex-col gap-2">
               {navItems.map(({ href, icon: Icon, label }) => {
                 const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -120,8 +130,23 @@ export function Sidebar() {
           aria-label={isExpanded ? "Recolher sidebar" : "Expandir sidebar"}
         >
           <Menu size={20} />
-          {isExpanded && <span className="text-sm font-semibold text-white">HelpFinance</span>}
         </button>
+
+        <div
+          className={cn(
+            "flex items-center",
+            isExpanded ? "w-full px-2 gap-2 justify-start" : "justify-center"
+          )}
+        >
+          <Image
+            src="/branding/logo.png"
+            alt="Logo HelpFinance"
+            width={isExpanded ? 28 : 30}
+            height={isExpanded ? 28 : 30}
+            className="rounded-lg"
+          />
+          {isExpanded && <span className="text-sm font-semibold text-white">HelpFinance</span>}
+        </div>
 
         <nav className={cn("flex flex-col gap-2 flex-1", isExpanded ? "w-full" : "items-center")}>
           {navItems.map(({ href, icon: Icon, label }) => {

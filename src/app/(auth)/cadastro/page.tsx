@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/components/layout/SessionContext";
 
 type Step = "info" | "password";
@@ -75,6 +76,14 @@ export default function CadastroPage() {
       <div className="w-full max-w-md md:max-w-4xl flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-2xl border border-[#2a2a3e] min-w-0">
         {/* Left - Branding */}
         <div className="flex-1 bg-gradient-to-br from-[#0d1a18] to-[#0a1a14] flex flex-col items-center justify-center p-5 md:p-10 gap-4 md:gap-6 min-w-0">
+          <Image
+            src="/branding/logo.png"
+            alt="Logo HelpFinance"
+            width={88}
+            height={88}
+            className="rounded-2xl"
+            priority
+          />
           <h2 className="text-2xl md:text-4xl font-bold text-white text-center">Help Finance</h2>
           <p className="text-[#9ca3af] text-center text-sm leading-relaxed max-w-xs">
             Bem vindo a melhor plataforma para controlar as suas finanças

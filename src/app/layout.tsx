@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   description: "A melhor plataforma para controlar as suas finanças",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/icon-192.svg",
-    apple: "/icons/icon-192.svg",
+    icon: "/favicon.ico",
+    apple: "/icons/icon-192.png",
   },
   appleWebApp: {
     capable: true,

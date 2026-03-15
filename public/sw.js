@@ -1,8 +1,8 @@
-const SW_VERSION = "hf-v1";
+const SW_VERSION = "hf-v3";
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const API_CACHE = `${SW_VERSION}-api`;
 
-const STATIC_ASSETS = ["/", "/manifest.webmanifest", "/icons/icon-192.svg", "/icons/icon-512.svg"];
+const STATIC_ASSETS = ["/", "/favicon.ico", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 const API_READ_PATHS = ["/api/transactions", "/api/investments", "/api/user"];
 const TRANSACTIONS_CACHE_PATHS = ["/api/transactions", "/api/recurring-transactions"];
 
