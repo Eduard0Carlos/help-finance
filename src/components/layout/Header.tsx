@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Eye, EyeOff } from "lucide-react";
 import { useSession } from "@/components/layout/SessionContext";
@@ -12,10 +12,13 @@ interface HeaderProps {
   title: string;
 }
 
+const TRANSACTIONS_UPDATED_EVENT = "hf-transactions-updated";
+
 export function Header({ title }: HeaderProps) {
   const { user } = useSession();
   const { hideBalance, toggleBalance } = useBalance();
   const [currentBalance, setCurrentBalance] = useState<number | null>(null);
+  const [monthlyFamilyLimit, setMonthlyFamilyLimit] = useState<number | null>(null);
 
   const initials = user?.name
     ?.split(" ")
@@ -24,12 +27,17 @@ export function Header({ title }: HeaderProps) {
     .join("")
     .toUpperCase() ?? "HF";
 
-  useEffect(() => {
-    async function loadCurrentBalance() {
+  const loadCurrentBalance = useCallback(async () => {
+    try {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
-      const res = await fetch(`/api/transactions?year=${year}&month=${month}`);
+      const [res, userRes] = await Promise.all([
+        fetch(`/api/transactions?year=${year}&month=${month}`, {
+          cache: "no-store",
+        }),
+        fetch("/api/user", { cache: "no-store" }),
+      ]);
       if (!res.ok) return;
 
       const transactions = (await res.json()) as ITransaction[];
@@ -41,10 +49,30 @@ export function Header({ title }: HeaderProps) {
         .reduce((sum, t) => sum + t.amount, 0);
 
       setCurrentBalance(income - expense);
+      if (userRes.ok) {
+        const userData = (await userRes.json()) as { monthlyFamilyLimit?: number };
+        setMonthlyFamilyLimit(userData.monthlyFamilyLimit ?? null);
+      }
+    } catch {
+      // Keep previous balance when request fails (e.g. offline).
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleTransactionsUpdated() {
+      void loadCurrentBalance();
     }
 
-    loadCurrentBalance();
-  }, []);
+    const initialLoadTimer = window.setTimeout(() => {
+      void loadCurrentBalance();
+    }, 0);
+    window.addEventListener(TRANSACTIONS_UPDATED_EVENT, handleTransactionsUpdated);
+
+    return () => {
+      window.clearTimeout(initialLoadTimer);
+      window.removeEventListener(TRANSACTIONS_UPDATED_EVENT, handleTransactionsUpdated);
+    };
+  }, [loadCurrentBalance]);
 
   return (
     <header className="h-14 flex items-center justify-between px-3 md:px-6 pl-14 md:pl-6 border-b border-[#1e1e2e] shrink-0 overflow-hidden">
@@ -70,6 +98,16 @@ export function Header({ title }: HeaderProps) {
           title="Saldo atual do mês"
         >
           {hideBalance ? "R$ ***********" : currentBalance === null ? "R$ 0,00" : formatCurrency(currentBalance)}
+        </span>
+        <span className="hidden md:inline text-[11px] text-[#9ca3af]" title="Meta mensal da família">
+          Meta mensal família:{" "}
+          <span className="text-white font-semibold">
+            {monthlyFamilyLimit === null
+              ? "-"
+              : hideBalance
+                ? "R$ ***"
+                : formatCurrency(monthlyFamilyLimit)}
+          </span>
         </span>
 
         <Link

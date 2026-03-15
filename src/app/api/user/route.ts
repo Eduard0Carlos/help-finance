@@ -7,11 +7,21 @@ import { getFamilyMemberIds } from "@/lib/family";
 
 const updateSchema = z
   .object({
-    dailyLimit: z.number().positive().optional(),
+    monthlyFamilyLimit: z.number().positive().optional(),
     investmentGoal: z.number().positive().optional(),
     investmentProfile: z.number().min(1).max(5).optional(),
   })
   .partial();
+
+function resolveMonthlyFamilyLimit(doc: { monthlyFamilyLimit?: number; dailyLimit?: number }) {
+  if (typeof doc.monthlyFamilyLimit === "number" && doc.monthlyFamilyLimit > 0) {
+    return doc.monthlyFamilyLimit;
+  }
+  if (typeof doc.dailyLimit === "number" && doc.dailyLimit > 0) {
+    return doc.dailyLimit * 30;
+  }
+  return 10500;
+}
 
 export async function GET(req: NextRequest) {
   const session = getSession(req);
@@ -24,7 +34,10 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
   if (!user.familyId) {
-    return NextResponse.json(user);
+    return NextResponse.json({
+      ...user.toObject(),
+      monthlyFamilyLimit: resolveMonthlyFamilyLimit(user.toObject()),
+    });
   }
 
   const members = await User.find({ familyId: user.familyId })
@@ -33,7 +46,7 @@ export async function GET(req: NextRequest) {
   const sharedSource = members[0] ?? user;
   return NextResponse.json({
     ...user.toObject(),
-    dailyLimit: sharedSource.dailyLimit,
+    monthlyFamilyLimit: resolveMonthlyFamilyLimit(sharedSource.toObject()),
     investmentGoal: sharedSource.investmentGoal,
     investmentProfile: sharedSource.investmentProfile,
   });

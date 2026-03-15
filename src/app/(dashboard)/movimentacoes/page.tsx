@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { Card } from "@/components/ui/Card";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { MonthSelector } from "@/components/ui/MonthSelector";
 import { Modal } from "@/components/ui/Modal";
 import dynamic from "next/dynamic";
 const SpendingDonutChart = dynamic(
@@ -35,8 +33,6 @@ import {
   TrendingDown,
   CheckCircle,
   Trash2,
-  Eye,
-  EyeOff,
   Save,
   X,
   ChevronLeft,
@@ -46,15 +42,21 @@ import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 import { toDateKey } from "@/lib/recurrence";
 
 const AJUSTE_PREFIX = "Ajuste planilha:";
+const TRANSACTIONS_UPDATED_EVENT = "hf-transactions-updated";
 
 function toMonthKey(year: number, month: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
-function buildRollingMonths(endYear: number, endMonth: number, count = 6): IMonthReference[] {
+function buildRollingMonths(
+  referenceYear: number,
+  referenceMonth: number,
+  monthsBack = 1,
+  monthsForward = 6
+): IMonthReference[] {
   const result: IMonthReference[] = [];
-  for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(endYear, endMonth - i, 1);
+  for (let offset = -monthsBack; offset <= monthsForward; offset++) {
+    const d = new Date(referenceYear, referenceMonth + offset, 1);
     result.push({
       year: d.getFullYear(),
       month: d.getMonth(),
@@ -73,7 +75,7 @@ function isAdjustmentTransaction(tx: ITransaction, category?: string) {
 }
 
 export default function MovimentacoesPage() {
-  const { hideBalance, toggleBalance } = useBalance();
+  const { hideBalance } = useBalance();
   const now = new Date();
   const [selected, setSelected] = useState<{ year: number; month: number }>({
     year: now.getFullYear(),
@@ -82,7 +84,7 @@ export default function MovimentacoesPage() {
   const [monthlyTransactions, setMonthlyTransactions] = useState<Record<string, ITransaction[]>>(
     {}
   );
-  const [dailyLimit, setDailyLimit] = useState(350);
+  const [monthlyFamilyLimit, setMonthlyFamilyLimit] = useState(10500);
   const [addOpen, setAddOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "sheet">("list");
@@ -98,12 +100,8 @@ export default function MovimentacoesPage() {
   const [deleteRecurringTarget, setDeleteRecurringTarget] = useState<ITransaction | null>(null);
 
   const sheetMonths = useMemo(
-    () => buildRollingMonths(selected.year, selected.month, 6),
+    () => buildRollingMonths(selected.year, selected.month, 1, 6),
     [selected]
-  );
-  const monthOptions = useMemo(
-    () => sheetMonths.map((month) => ({ year: month.year, month: month.month })),
-    [sheetMonths]
   );
   const selectedMonthKey = toMonthKey(selected.year, selected.month);
   const transactions = monthlyTransactions[selectedMonthKey] ?? [];
@@ -123,7 +121,8 @@ export default function MovimentacoesPage() {
         Promise.all(
           sheetMonths.map(async (monthRef) => {
             const txRes = await fetch(
-              `/api/transactions?year=${monthRef.year}&month=${monthRef.month}`
+              `/api/transactions?year=${monthRef.year}&month=${monthRef.month}`,
+              { cache: "no-store" }
             );
             if (!txRes.ok) return [monthRef.key, []] as const;
             const data = (await txRes.json()) as ITransaction[];
@@ -134,10 +133,11 @@ export default function MovimentacoesPage() {
       ]);
 
       setMonthlyTransactions(Object.fromEntries(monthsData));
+      window.dispatchEvent(new CustomEvent(TRANSACTIONS_UPDATED_EVENT));
 
       if (userRes.ok) {
         const u = await userRes.json();
-        setDailyLimit(u.dailyLimit ?? 350);
+        setMonthlyFamilyLimit(u.monthlyFamilyLimit ?? 10500);
       }
     } finally {
       setLoading(false);
@@ -158,18 +158,10 @@ export default function MovimentacoesPage() {
 
   const balance = totalIncome - totalExpense;
 
-  const daysInMonth = new Date(selected.year, selected.month + 1, 0).getDate();
-
-  const dailyTotals: Record<string, number> = {};
-  transactions
-    .filter((t) => t.type === "expense")
-    .forEach((t) => {
-      const day = new Date(t.date).toISOString().split("T")[0]!;
-      dailyTotals[day] = (dailyTotals[day] ?? 0) + t.amount;
-    });
-  const daysWithinLimit = Object.values(dailyTotals).filter(
-    (v) => v <= dailyLimit
-  ).length;
+  const monthlyExpenseProgress = Math.round(
+    (totalExpense / Math.max(monthlyFamilyLimit, 1)) * 100
+  );
+  const isMonthlyGoalOnTrack = totalExpense <= monthlyFamilyLimit;
 
   const expenseByCategory: Record<string, number> = {};
   transactions.filter((t) => t.type === "expense").forEach((t) => {
@@ -216,6 +208,20 @@ export default function MovimentacoesPage() {
     return sum + monthTx.filter((tx) => tx.type === "expense").reduce((acc, tx) => acc + tx.amount, 0);
   }, 0);
   const periodNetTotal = periodIncomeTotal - periodExpenseTotal;
+  const netByMonth = useMemo<Record<string, number>>(() => {
+    const values: Record<string, number> = {};
+    for (const monthRef of sheetMonths) {
+      const monthTx = monthlyTransactions[monthRef.key] ?? [];
+      const income = monthTx
+        .filter((tx) => tx.type === "income")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+      const expense = monthTx
+        .filter((tx) => tx.type === "expense")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+      values[monthRef.key] = income - expense;
+    }
+    return values;
+  }, [sheetMonths, monthlyTransactions]);
 
   const sheetRows = useMemo<IFinancialSheetRow[]>(() => {
     const valuesByMonthIncome: Record<string, number> = {};
@@ -239,7 +245,22 @@ export default function MovimentacoesPage() {
       valuesByMonthBalance[monthRef.key] = income - expense;
     }
 
-    const categories = [...categorySet].sort((a, b) => a.localeCompare(b));
+    const categoryTotals: Record<string, number> = {};
+    for (const category of categorySet) {
+      let total = 0;
+      for (const monthRef of sheetMonths) {
+        const monthTx = monthlyTransactions[monthRef.key] ?? [];
+        total += monthTx
+          .filter((tx) => tx.category === category)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      }
+      categoryTotals[category] = total;
+    }
+    const categories = [...categorySet].sort((a, b) => {
+      const byTotal = (categoryTotals[b] ?? 0) - (categoryTotals[a] ?? 0);
+      if (byTotal !== 0) return byTotal;
+      return a.localeCompare(b, "pt-BR");
+    });
     const categoryRows: IFinancialSheetRow[] = categories.map((category) => {
       const valuesByMonth: Record<string, number> = {};
       for (const monthRef of sheetMonths) {
@@ -329,6 +350,7 @@ export default function MovimentacoesPage() {
             : item._id !== tx._id
         ),
       }));
+      window.dispatchEvent(new CustomEvent(TRANSACTIONS_UPDATED_EVENT));
       setDeleteRecurringTarget(null);
     } finally {
       setDeleting(false);
@@ -518,6 +540,7 @@ export default function MovimentacoesPage() {
           }
           return { ...prev, [monthKey]: updatedMonthTransactions };
         });
+        window.dispatchEvent(new CustomEvent(TRANSACTIONS_UPDATED_EVENT));
       } else {
         await load();
       }
@@ -556,56 +579,30 @@ export default function MovimentacoesPage() {
               Planilha
             </button>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => shiftSelectedMonth(-1)}
+              className="h-8 w-8 rounded-full border border-[#2a2a3e] text-[#9ca3af] hover:text-white hover:border-[#3a3a52] inline-flex items-center justify-center"
+              title="Mês anterior"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <p className="text-xs text-[#9ca3af] min-w-[130px] text-center truncate">
+              {getMonthName(selected.month).slice(0, 3).toUpperCase()}/{String(selected.year).slice(-2)}
+            </p>
+            <button
+              onClick={() => shiftSelectedMonth(1)}
+              className="h-8 w-8 rounded-full border border-[#2a2a3e] text-[#9ca3af] hover:text-white hover:border-[#3a3a52] inline-flex items-center justify-center"
+              title="Próximo mês"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
 
         {viewMode === "list" ? (
           <div className="flex-1 overflow-auto grid grid-cols-1 lg:grid-cols-3 gap-4 content-start min-w-0 pr-1">
-            <div className="flex flex-col gap-4 min-w-0">
-              <Card>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-[#9ca3af]">Saldo</p>
-                  <button
-                    onClick={toggleBalance}
-                    className="text-[#9ca3af] hover:text-white transition-colors"
-                  >
-                    {hideBalance ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-                <p className="text-white text-sm font-semibold mb-3">
-                  {hideBalance ? "R$ ***********" : formatCurrency(balance)}
-                </p>
-                <p className="text-xs text-[#9ca3af] mb-1">Limite Diário</p>
-                <ProgressBar
-                  value={dailyLimit * 0.67}
-                  max={dailyLimit}
-                  showValues
-                  formatValue={(v) => mask(formatCurrency(v))}
-                />
-              </Card>
-              <Card>
-                <p className="text-xs text-[#9ca3af] mb-3">Meses</p>
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => shiftSelectedMonth(-1)}
-                    className="h-8 w-8 rounded-lg border border-[#2a2a3e] text-[#9ca3af] hover:text-white hover:border-[#3a3a52] inline-flex items-center justify-center"
-                    title="Mês anterior"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <span className="text-[11px] text-[#9ca3af] truncate">{windowLabel}</span>
-                  <button
-                    onClick={() => shiftSelectedMonth(1)}
-                    className="h-8 w-8 rounded-lg border border-[#2a2a3e] text-[#9ca3af] hover:text-white hover:border-[#3a3a52] inline-flex items-center justify-center"
-                    title="Próximo mês"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-                <MonthSelector months={monthOptions} selected={selected} onSelect={setSelected} />
-              </Card>
-            </div>
-
-            <Card className="flex flex-col overflow-hidden min-w-0">
+            <Card className="flex flex-col overflow-hidden min-w-0 lg:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs text-[#9ca3af]">Movimentações</p>
               </div>
@@ -698,11 +695,25 @@ export default function MovimentacoesPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#9ca3af] mb-1">Dias dentro do Limite</p>
-                    <div className="flex items-center gap-1 bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-full px-2 py-1">
-                      <CheckCircle size={10} className="text-[#22c55e]" />
-                      <span className="text-[#22c55e] text-xs">
-                        {daysWithinLimit}/{daysInMonth} dias
+                    <p className="text-[10px] text-[#9ca3af] mb-1">Meta Mensal da Família</p>
+                    <div
+                      className={`flex items-center gap-1 rounded-full px-2 py-1 ${
+                        isMonthlyGoalOnTrack
+                          ? "bg-[#22c55e]/10 border border-[#22c55e]/20"
+                          : "bg-[#ef4444]/10 border border-[#ef4444]/20"
+                      }`}
+                    >
+                      <CheckCircle
+                        size={10}
+                        className={isMonthlyGoalOnTrack ? "text-[#22c55e]" : "text-[#ef4444]"}
+                      />
+                      <span
+                        className={`text-xs ${
+                          isMonthlyGoalOnTrack ? "text-[#22c55e]" : "text-[#ef4444]"
+                        }`}
+                      >
+                        {mask(formatCurrency(totalExpense))} / {mask(formatCurrency(monthlyFamilyLimit))} (
+                        {monthlyExpenseProgress}%)
                       </span>
                     </div>
                   </div>
@@ -748,25 +759,9 @@ export default function MovimentacoesPage() {
         ) : (
           <Card className="flex-1 min-h-0 overflow-hidden min-w-0 flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <button
-                  onClick={() => shiftSelectedMonth(-1)}
-                  className="h-8 w-8 rounded-lg border border-[#2a2a3e] text-[#9ca3af] hover:text-white hover:border-[#3a3a52] inline-flex items-center justify-center shrink-0"
-                  title="Janela anterior"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <p className="text-xs text-[#9ca3af] truncate">
-                  Planilha financeira mensal ({windowLabel})
-                </p>
-                <button
-                  onClick={() => shiftSelectedMonth(1)}
-                  className="h-8 w-8 rounded-lg border border-[#2a2a3e] text-[#9ca3af] hover:text-white hover:border-[#3a3a52] inline-flex items-center justify-center shrink-0"
-                  title="Próxima janela"
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
+              <p className="text-xs text-[#9ca3af] truncate">
+                Planilha financeira mensal ({windowLabel})
+              </p>
               <button
                 onClick={() => setAddOpen(true)}
                 className="h-8 px-3 rounded-lg bg-[#2a2a3e] hover:bg-[#3a3a5e] text-white text-xs transition-colors shrink-0"
@@ -784,17 +779,17 @@ export default function MovimentacoesPage() {
                 <p className="text-[#9ca3af] text-sm">Sem dados para a planilha</p>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 overflow-auto border border-[#1e1e2e] rounded-lg">
-                <table className="w-full min-w-[920px] text-xs border-separate border-spacing-0">
+              <div className="flex-1 min-h-0 overflow-auto border-2 border-[#2a2a3e] rounded-lg bg-[#0f1220]">
+                <table className="w-full min-w-[920px] text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#101018]">
-                      <th className="sticky top-0 left-0 z-20 text-left py-2 px-3 font-medium text-[#9ca3af] border-b border-r border-[#1e1e2e] bg-[#101018] min-w-[220px]">
+                    <tr className="bg-[#0d1020]">
+                      <th className="sticky top-0 left-0 z-20 text-left py-2.5 px-3 font-semibold text-[#c4cad6] border-b-2 border-r-2 border-[#2a2a3e] bg-[#0d1020] min-w-[220px]">
                         Item
                       </th>
                       {sheetMonths.map((month) => (
                         <th
                           key={month.key}
-                          className="sticky top-0 z-10 text-right py-2 px-3 font-medium text-[#9ca3af] border-b border-[#1e1e2e] bg-[#101018] min-w-[130px]"
+                          className="sticky top-0 z-10 text-right py-2.5 px-3 font-semibold text-[#c4cad6] border-b-2 border-r border-[#2a2a3e] bg-[#0d1020] min-w-[130px]"
                         >
                           {month.label}
                         </th>
@@ -805,13 +800,13 @@ export default function MovimentacoesPage() {
                     {sheetRows.map((row, rowIndex) => (
                       <tr
                         key={row.key}
-                        className={rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#101018]/40"}
+                        className={rowIndex % 2 === 0 ? "bg-[#11152a]" : "bg-[#0d1020]"}
                       >
                         <td
-                          className={`sticky left-0 z-10 py-2 px-3 border-r border-b border-[#1e1e2e] ${
+                          className={`sticky left-0 z-10 py-2.5 px-3 border-r-2 border-b border-[#2a2a3e] ${
                             row.rowType === "summary"
-                              ? "text-white font-semibold bg-[#141420]"
-                              : "text-[#d1d5db] bg-[#141420]"
+                              ? "text-white font-semibold bg-[#1a1f38]"
+                              : "text-[#d1d5db] bg-[#161a2f]"
                           }`}
                         >
                           {row.title}
@@ -823,7 +818,9 @@ export default function MovimentacoesPage() {
                           return (
                             <td
                               key={`${row.key}-${month.key}`}
-                              className="py-1.5 px-2 border-b border-[#1e1e2e] text-right"
+                              className={`py-1.5 px-2 border-b border-r border-[#2a2a3e] text-right ${
+                                row.rowType === "summary" ? "bg-[#151a31]" : ""
+                              }`}
                             >
                               {isEditing ? (
                                 <div className="inline-flex items-center gap-1">
@@ -877,21 +874,33 @@ export default function MovimentacoesPage() {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-[#0f1220]">
-                      <td className="sticky left-0 z-10 py-2 px-3 border-r border-t border-[#1e1e2e] text-white font-semibold bg-[#0f1220]">
-                        Total ganho - gasto
+                    <tr className="bg-[#131936] border-t-2 border-[#3a476c]">
+                      <td className="sticky left-0 z-10 py-2.5 px-3 border-r-2 border-t-2 border-[#3a476c] text-white font-bold bg-[#131936]">
+                        TOTAL
                       </td>
                       {sheetMonths.map((month, index) => (
                         <td
                           key={`period-total-${month.key}`}
-                          className="py-2 px-2 border-t border-[#1e1e2e] text-right font-semibold"
+                          className="py-2.5 px-2 border-t-2 border-r border-[#3a476c] text-right font-bold"
                         >
                           {index === sheetMonths.length - 1 ? (
-                            <span className={periodNetTotal >= 0 ? "text-[#22c55e]" : "text-[#ef4444]"}>
-                              {mask(formatCurrency(periodNetTotal))}
+                            <span
+                              className={`px-2 py-1 rounded ${
+                                periodNetTotal >= 0
+                                  ? "text-[#22c55e] bg-[#22c55e]/10"
+                                  : "text-[#ef4444] bg-[#ef4444]/10"
+                              }`}
+                            >
+                              {mask(formatCurrency(netByMonth[month.key] ?? 0))}
                             </span>
                           ) : (
-                            <span className="text-[#6b7280]">-</span>
+                            <span
+                              className={
+                                (netByMonth[month.key] ?? 0) >= 0 ? "text-[#22c55e]" : "text-[#ef4444]"
+                              }
+                            >
+                              {mask(formatCurrency(netByMonth[month.key] ?? 0))}
+                            </span>
                           )}
                         </td>
                       ))}

@@ -24,7 +24,7 @@ export default function DashboardPage() {
   const { hideBalance } = useBalance();
   const [transactions, setTransactions] = useState<ITransaction[]>([]);
   const [investments, setInvestments] = useState<IInvestment[]>([]);
-  const [dailyLimit, setDailyLimit] = useState(350);
+  const [monthlyFamilyLimit, setMonthlyFamilyLimit] = useState(10500);
   const [loading, setLoading] = useState(true);
 
   const now = new Date();
@@ -43,7 +43,7 @@ export default function DashboardPage() {
         if (invRes.ok) setInvestments(await invRes.json());
         if (userRes.ok) {
           const user = await userRes.json();
-          setDailyLimit(user.dailyLimit ?? 350);
+          setMonthlyFamilyLimit(user.monthlyFamilyLimit ?? 10500);
         }
       } finally {
         setLoading(false);
@@ -60,18 +60,10 @@ export default function DashboardPage() {
     .filter((t) => t.type === "expense")
     .reduce((s, t) => s + t.amount, 0);
 
-  const todayExpenses = transactions
-    .filter((t) => {
-      const d = new Date(t.date);
-      const today = new Date();
-      return (
-        t.type === "expense" &&
-        d.getDate() === today.getDate() &&
-        d.getMonth() === today.getMonth() &&
-        d.getFullYear() === today.getFullYear()
-      );
-    })
-    .reduce((s, t) => s + t.amount, 0);
+  const monthlyExpenseProgress = Math.min(
+    100,
+    Math.round((totalExpense / Math.max(monthlyFamilyLimit, 1)) * 100)
+  );
 
   // Category breakdown for donut
   const expenseByCategory: Record<string, number> = {};
@@ -154,15 +146,15 @@ export default function DashboardPage() {
           </div>
 
           <div>
-            <p className="text-[#9ca3af] text-xs mb-2">Limite de Gastos Diário</p>
+            <p className="text-[#9ca3af] text-xs mb-2">Meta Mensal da Família</p>
             <div className="flex justify-center">
               <ProgressRing
-                value={todayExpenses}
-                max={dailyLimit}
+                value={totalExpense}
+                max={monthlyFamilyLimit}
                 size={100}
                 strokeWidth={7}
-                label={mask(`${formatCurrency(todayExpenses)} / ${formatCurrency(dailyLimit)}`)}
-                sublabel={`${Math.round((todayExpenses / dailyLimit) * 100)}%`}
+                label={mask(`${formatCurrency(totalExpense)} / ${formatCurrency(monthlyFamilyLimit)}`)}
+                sublabel={`${monthlyExpenseProgress}%`}
               />
             </div>
           </div>

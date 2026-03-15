@@ -5,7 +5,7 @@ export interface IUserDocument extends Document {
   email: string;
   passwordHash: string;
   profileImage?: string;
-  dailyLimit: number;
+  monthlyFamilyLimit: number;
   investmentGoal: number;
   investmentProfile: number;
   familyId?: string | null;
@@ -19,7 +19,7 @@ const UserSchema = new Schema<IUserDocument>(
     email: { type: String, required: true, unique: true, lowercase: true },
     passwordHash: { type: String, required: true },
     profileImage: { type: String },
-    dailyLimit: { type: Number, default: 350 },
+    monthlyFamilyLimit: { type: Number, default: 10500 },
     investmentGoal: { type: Number, default: 4000 },
     investmentProfile: { type: Number, default: 1, min: 1, max: 5 },
     familyId: { type: String, index: true, default: null },

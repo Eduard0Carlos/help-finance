@@ -19,7 +19,7 @@ A melhor plataforma para controlar as suas finanças — gerenciador financeiro 
 - **Movimentações:** lançamentos de receitas e despesas por mês
 - **Investimentos:** carteira com cotações em tempo real via brapi.dev
 - **Chat:** interface de chatbot (UI pronta, IA a implementar)
-- **Perfil:** configurações de limite diário, meta e perfil de investidor
+- **Perfil:** configurações de meta mensal da família, meta e perfil de investidor
 
 ## Configuração Local
 

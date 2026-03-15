@@ -4,6 +4,7 @@ const API_CACHE = `${SW_VERSION}-api`;
 
 const STATIC_ASSETS = ["/", "/manifest.webmanifest", "/icons/icon-192.svg", "/icons/icon-512.svg"];
 const API_READ_PATHS = ["/api/transactions", "/api/investments", "/api/user"];
+const TRANSACTIONS_CACHE_PATHS = ["/api/transactions", "/api/recurring-transactions"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -32,26 +33,48 @@ function isApiReadRequest(requestUrl, requestMethod) {
   );
 }
 
+function shouldInvalidateTransactionsCache(requestUrl, requestMethod) {
+  if (requestMethod === "GET" || requestMethod === "HEAD") return false;
+  return TRANSACTIONS_CACHE_PATHS.some((path) => requestUrl.pathname.startsWith(path));
+}
+
+async function invalidateTransactionsCache() {
+  const cache = await caches.open(API_CACHE);
+  const keys = await cache.keys();
+  await Promise.all(
+    keys
+      .filter((req) => {
+        const reqUrl = new URL(req.url);
+        return TRANSACTIONS_CACHE_PATHS.some((path) => reqUrl.pathname.startsWith(path));
+      })
+      .map((req) => cache.delete(req))
+  );
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
   if (url.origin !== self.location.origin) return;
 
+  if (shouldInvalidateTransactionsCache(url, request.method)) {
+    event.waitUntil(invalidateTransactionsCache());
+  }
+
   if (isApiReadRequest(url, request.method)) {
     event.respondWith(
       caches.open(API_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        const networkPromise = fetch(request)
-          .then((response) => {
-            if (response && response.ok) {
-              cache.put(request, response.clone());
-            }
-            return response;
-          })
-          .catch(() => cached);
-
-        return cached || networkPromise;
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          throw new Error("Network unavailable and no cached API response.");
+        }
       })
     );
     return;

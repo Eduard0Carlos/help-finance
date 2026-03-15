@@ -12,7 +12,7 @@ import { performMutationWithOfflineQueue } from "@/lib/offlineQueue";
 
 export default function PerfilPage() {
   const { user, logout, refresh } = useSession();
-  const [dailyLimit, setDailyLimit] = useState(350);
+  const [monthlyFamilyLimit, setMonthlyFamilyLimit] = useState(10500);
   const [investmentGoal, setInvestmentGoal] = useState(4000);
   const [investmentProfile, setInvestmentProfile] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -29,7 +29,7 @@ export default function PerfilPage() {
     const response = await fetch("/api/user");
     if (!response.ok) return;
     const profile = await response.json();
-    setDailyLimit(profile.dailyLimit ?? 350);
+    setMonthlyFamilyLimit(profile.monthlyFamilyLimit ?? 10500);
     setInvestmentGoal(profile.investmentGoal ?? 4000);
     setInvestmentProfile(profile.investmentProfile ?? 1);
   }, []);
@@ -59,7 +59,7 @@ export default function PerfilPage() {
     const result = await performMutationWithOfflineQueue({
       url: "/api/user",
       method: "PATCH",
-      body: { dailyLimit, investmentGoal, investmentProfile },
+      body: { monthlyFamilyLimit, investmentGoal, investmentProfile },
     });
     setSaving(false);
     if (result.ok) {
@@ -156,17 +156,17 @@ export default function PerfilPage() {
             <form onSubmit={handleSave} className="flex flex-col gap-4">
               <div>
                 <label className="text-xs text-[#9ca3af] block mb-1">
-                  Limite Diário de Gastos
+                  Meta Mensal de Gastos da Família
                 </label>
                 <input
                   type="number"
                   min={0}
-                  value={dailyLimit}
-                  onChange={(e) => setDailyLimit(Number(e.target.value))}
+                  value={monthlyFamilyLimit}
+                  onChange={(e) => setMonthlyFamilyLimit(Number(e.target.value))}
                   className={inputClass}
                 />
                 <p className="text-[10px] text-[#9ca3af] mt-1">
-                  Atual: {formatCurrency(dailyLimit)}
+                  Atual: {formatCurrency(monthlyFamilyLimit)}
                 </p>
               </div>
 

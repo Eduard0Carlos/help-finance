@@ -3,7 +3,7 @@ export interface IUser {
   name: string;
   email: string;
   profileImage?: string;
-  dailyLimit: number;
+  monthlyFamilyLimit: number;
   investmentGoal: number;
   investmentProfile: number; // 1-5
   familyId?: string | null;
